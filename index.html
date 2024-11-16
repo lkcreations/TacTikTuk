@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(120deg, #ff9a9e, #fad0c4);
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 10px;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s ease-in-out, background-color 0.3s ease;
+    }
+    .cell:hover {
+      transform: scale(1.1);
+    }
+    .cell.x {
+      color: #4CAF50;
+    }
+    .cell.o {
+      color: #FF5722;
+    }
+    .cell.winner {
+      background-color: #ffd700;
+      color: white;
+      font-size: 2.5rem;
+      animation: pulse 0.5s infinite alternate;
+    }
+    @keyframes pulse {
+      from {
+        transform: scale(1.1);
+      }
+      to {
+        transform: scale(1.3);
+      }
+    }
+    .message {
+      margin-top: 20px;
+      font-size: 1.5rem;
+      color: #fff;
+    }
+    .button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+    .button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="board" id="board"></div>
+    <div class="message" id="message">Player X's turn</div>
+    <button class="button" id="restart">Restart</button>
+    <audio id="winSound" src="win-sound.mp3"></audio> <!-- Include your sound file here -->
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const message = document.getElementById('message');
+    const restartButton = document.getElementById('restart');
+    const winSound = document.getElementById('winSound');
+
+    const state = {
+      board: Array(9).fill(null),
+      currentPlayer: 'X',
+      gameOver: false,
+    };
+
+    const winningCombos = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    function checkWinner() {
+      for (let combo of winningCombos) {
+        const [a, b, c] = combo;
+        if (
+          state.board[a] &&
+          state.board[a] === state.board[b] &&
+          state.board[a] === state.board[c]
+        ) {
+          highlightWinningCells(combo);
+          playWinSound();
+          return state.board[a];
+        }
+      }
+      return state.board.includes(null) ? null : 'Tie';
+    }
+
+    function highlightWinningCells(combo) {
+      combo.forEach(index => {
+        const cell = board.children[index];
+        cell.classList.add('winner');
+      });
+    }
+
+    function playWinSound() {
+      winSound.currentTime = 0; // Reset the sound to the beginning
+      winSound.play();
+    }
+
+    function handleCellClick(e) {
+      const index = e.target.dataset.index;
+
+      if (state.board[index] || state.gameOver) return;
+
+      state.board[index] = state.currentPlayer;
+      e.target.classList.add(state.currentPlayer.toLowerCase());
+      e.target.textContent = state.currentPlayer;
+
+      const winner = checkWinner();
+      if (winner) {
+        state.gameOver = true;
+        message.textContent = winner === 'Tie' ? "It's a Tie!" : `Player ${winner} Wins!`;
+        return;
+      }
+
+      state.currentPlayer = state.currentPlayer === 'X' ? 'O' : 'X';
+      message.textContent = `Player ${state.currentPlayer}'s turn`;
+    }
+
+    function restartGame() {
+      state.board.fill(null);
+      state.currentPlayer = 'X';
+      state.gameOver = false;
+      message.textContent = "Player X's turn";
+      Array.from(board.children).forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('x', 'o', 'winner');
+      });
+    }
+
+    function createBoard() {
+      board.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+        cell.addEventListener('click', handleCellClick);
+        board.appendChild(cell);
+      }
+    }
+
+    createBoard();
+    restartButton.addEventListener('click', restartGame);
+  </script>
+</body>
+</html>
